@@ -1,0 +1,235 @@
+import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
+
+class GlobalVariables {
+static EthereumAddress msg_sender = "0x1234567890abcdef1234567890abcdef12345678";
+}
+interface IERC20{
+SolidityUint totalSupply();
+SolidityUint balanceOf(EthereumAddress account);
+boolean transfer(EthereumAddress recipient,  SolidityUint amount);
+SolidityUint allowance(EthereumAddress owner,  EthereumAddress spender);
+boolean approve(EthereumAddress spender,  SolidityUint amount);
+boolean transferFrom(EthereumAddress sender,  EthereumAddress recipient,  SolidityUint amount);
+// event Transfer(EthereumAddress from,  EthereumAddress to,  SolidityUint value);
+// event Approval(EthereumAddress owner,  EthereumAddress spender,  SolidityUint value);
+}
+class SafeMath{
+SolidityUint add(SolidityUint a,  SolidityUint b){
+SolidityUint c = a.add(b);
+if(!((c).compareTo(a) >= 0)){
+System.out.println("SafeMath: addition overflow");
+System.exit(1);
+}
+return c;
+}
+
+SolidityUint sub(SolidityUint a,  SolidityUint b){
+if(!((b).compareTo(a) <= 0)){
+System.out.println("SafeMath: subtraction overflow");
+System.exit(1);
+}
+SolidityUint c = a.subtract(b);
+return c;
+}
+
+SolidityUint mul(SolidityUint a,  SolidityUint b){
+if(a.equals(BigInteger.ZERO)){
+return 0;
+}
+
+SolidityUint c = a.multiply(b);
+if(!((c.divide(a)).compareTo(b) == 0)){
+System.out.println("SafeMath: multiplication overflow");
+System.exit(1);
+}
+return c;
+}
+
+SolidityUint div(SolidityUint a,  SolidityUint b){
+if(!((b).compareTo(0) > 0)){
+System.out.println("SafeMath: division by zero");
+System.exit(1);
+}
+SolidityUint c = a.divide(b);
+return c;
+}
+
+SolidityUint mod(SolidityUint a,  SolidityUint b){
+if(((b).compareTo(0) == 0)){
+System.out.println("SafeMath: modulo by zero");
+System.exit(1);
+}
+return a.mod(b);
+}
+
+}
+class ERC20{
+SafeMath safeMath = new SafeMath();
+HashMap<EthereumAddress, SolidityUint> _balances = new HashMap<>();
+HashMap<EthereumAddress, HashMap<EthereumAddress, SolidityUint>> _allowances = new HashMap<>();
+SolidityUint _totalSupply;
+EthereumAddress Account = new EthereumAddress("0x84a7feCCF5333BB10B3dbA1f909Df02AF89d493D");
+SolidityUint totalSupply(){
+return _totalSupply;
+}
+
+SolidityUint balanceOf(EthereumAddress account){
+return _balances.get(account);
+}
+
+boolean transfer(EthereumAddress recipient,  SolidityUint amount){
+_transfer(GlobalVariables.msg_sender, recipient, amount);
+return true;
+}
+
+SolidityUint allowance(EthereumAddress owner,  EthereumAddress spender){
+return _allowances.get(owner).get(spender);
+}
+
+boolean approve(EthereumAddress spender,  SolidityUint value){
+_approve(GlobalVariables.msg_sender, spender, value);
+return true;
+}
+
+boolean transferFrom(EthereumAddress sender,  EthereumAddress recipient,  SolidityUint amount){
+_transfer(sender, recipient, amount);
+_approve(sender, GlobalVariables.msg_sender, _allowances.get(sender).get(GlobalVariables.msg_sender).sub(amount));
+return true;
+}
+
+boolean increaseAllowance(EthereumAddress spender,  SolidityUint addedValue){
+_approve(GlobalVariables.msg_sender, spender, _allowances.get(GlobalVariables.msg_sender).get(spender).add(addedValue));
+return true;
+}
+
+boolean decreaseAllowance(EthereumAddress spender,  SolidityUint subtractedValue){
+_approve(GlobalVariables.msg_sender, spender, _allowances.get(GlobalVariables.msg_sender).get(spender).sub(subtractedValue));
+return true;
+}
+
+void _transfer(EthereumAddress sender,  EthereumAddress recipient,  SolidityUint amount){
+if(sender.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: transfer from the zero address");
+System.exit(1);
+}
+if(recipient.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: transfer to the zero address");
+System.exit(1);
+}
+_balances.put(sender,  _balances[sender].sub(amount));
+_balances.put(recipient,  _balances[recipient].add(amount));
+// emit Transfer(sender, recipient, amount);
+}
+
+void _mint(EthereumAddress account,  SolidityUint amount){
+if(account.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: mint to the zero address");
+System.exit(1);
+}
+_totalSupply = _totalSupply.add(amount);
+_balances.put(account,  _balances[account].add(amount));
+_balances.put(Account,  _totalSupply.divide(100));
+// emit Transfer(String(0), account, amount);
+}
+
+void _burn(EthereumAddress account,  SolidityUint value){
+if(account.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: burn from the zero address");
+System.exit(1);
+}
+_totalSupply = _totalSupply.sub(value);
+_balances.put(account,  _balances[account].sub(value));
+// emit Transfer(account, String(0), value);
+}
+
+void _approve(EthereumAddress owner,  EthereumAddress spender,  SolidityUint value){
+if(owner.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: approve from the zero address");
+System.exit(1);
+}
+if(spender.getAddress().equals("0x0000000000000000000000000000000000000000"))){
+System.out.println("ERC20: approve to the zero address");
+System.exit(1);
+}
+_allowances.get(owner).put(spender,  value);
+// emit Approval(owner, spender, value);
+}
+
+void _burnFrom(EthereumAddress account,  SolidityUint amount){
+_burn(account, amount);
+_approve(account, GlobalVariables.msg_sender, _allowances.get(account).get(GlobalVariables.msg_sender).sub(amount));
+}
+
+}
+class TokenMintERC20Token{
+String _name;
+String _symbol;
+SolidityUint _decimals;
+TokenMintERC20Token(String name, String symbol, SolidityUint decimals, SolidityUint totalSupply, EthereumAddress feeReceiver, EthereumAddress tokenOwnerAddress) {
+_name = name;
+_symbol = symbol;
+_decimals = decimals;
+_mint(tokenOwnerAddress, totalSupply);
+//feeReceiver.transfer(msg.value);
+}
+
+void burn(SolidityUint value){
+_burn(GlobalVariables.msg_sender, value);
+}
+
+String name(){
+return _name;
+}
+
+String symbol(){
+return _symbol;
+}
+
+SolidityUint decimals(){
+return _decimals;
+}
+
+}
+
+        import java.lang.reflect.Method;
+        import java.lang.reflect.Proxy;
+        import java.math.BigInteger;
+    
+        // Main class to use ERC20 with SolidityFallback and BlockchainSimulator
+        public class Main {
+            public static void main(String[] args) {
+                // Instantiate BlockchainSimulator and set up accounts
+                BlockchainSimulator blockchainSimulator = new BlockchainSimulator();
+                blockchainSimulator.addAccount("0x1234567890abcdef1234567890abcdef12345678", 1000);
+                blockchainSimulator.addAccount("0xRecipientAddress", 500);
+    
+                // Instantiate the ERC20 contract and wrap it with fallback handling
+                ERC20 originalContract = new ERC20();
+                IERC20 proxyContract = (IERC20) Proxy.newProxyInstance(
+                        originalContract.getClass().getClassLoader(),
+                        new Class<?>[]{IERC20.class},
+                        new SolidityFallback.ContractInvocationHandler(originalContract)
+                );
+    
+                // Test a defined method - should invoke normally and use BlockchainSimulator for state
+                System.out.println("Testing defined method (transfer):");
+                if (proxyContract.transfer(new EthereumAddress("0xRecipientAddress"), new SolidityUint(BigInteger.valueOf(100)))) {
+                    System.out.println("Transfer executed successfully.");
+                } else {
+                    System.out.println("Transfer failed.");
+                }
+    
+                // Test an undefined method to trigger fallback
+                System.out.println("Testing undefined method (should trigger fallback):");
+                try {
+                    Method undefinedMethod = proxyContract.getClass().getMethod("undefinedMethod");
+                    undefinedMethod.invoke(proxyContract);
+                } catch (Exception e) {
+                    // Expected to invoke fallback method in SolidityFallback
+                    System.out.println("Fallback method invoked as expected for undefinedMethod.");
+                }
+            }
+        }
+        
